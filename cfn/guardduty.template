@@ -3,91 +3,148 @@
    "Description":"Alert Logic template for creating a CloudWatch events collector for Guard Duty events",
    "Parameters":{
       "AccessKeyId":{
-          "Description":"Alertlogic Access Key Id obtained from AIMS",
-          "Type":"String"
+         "Description":"Alertlogic Access Key Id obtained from AIMS",
+         "Type":"String"
       },
       "SecretKey":{
-          "Description":"Alertlogic Secret Key returned from AIMS for the Access Key Id",
-          "Type":"String",
-          "NoEcho": true
+         "Description":"Alertlogic Secret Key returned from AIMS for the Access Key Id",
+         "Type":"String",
+         "NoEcho":true
       },
-      "AlApiEndpoint": {
-          "Description":"Alert Logic API endpoint",
-          "Type": "String",
-          "Default": "api.global-services.global.alertlogic.com",
-          "AllowedValues" : [
-               "api.global-services.global.alertlogic.com",
-               "api.global-integration.product.dev.alertlogic.com"
-          ]
+      "AlApiEndpoint":{
+         "Description":"Alert Logic API endpoint",
+         "Type":"String",
+         "Default":"api.global-services.global.alertlogic.com",
+         "AllowedValues":[
+            "api.global-services.global.alertlogic.com",
+            "api.global-integration.product.dev.alertlogic.com"
+         ]
       },
       "AlDataResidency":{
-          "Description":"Alert Logic Data Residency",
-          "Type":"String",
-          "Default" : "default",
-          "AllowedValues" : ["default"]
+         "Description":"Alert Logic Data Residency",
+         "Type":"String",
+         "Default":"default",
+         "AllowedValues":[
+            "default"
+         ]
       },
-      "CollectorId": {
-        "Description": "Optional. A collector UUID if known.",
-        "Type": "String",
-        "Default": "none"
-    },
-    "AlApplicationId": {
-        "Description": "Alert Logic Application Id for collected logs",
-        "Type": "String",
-        "Default": "guardduty"
-    },
-    "EnableKMSKeyRotation": {
-        "Description": "Enable automatic KMS key rotation. Incur additional AWS charges.",
-        "Type": "String",
-        "AllowedValues" : ["True", "False"],
-        "Default": "False"
-    },
-    "KinesisShardCount": {
-        "Description": "Collector kinesis stream shard count.",
-        "Type": "Number",
-        "Default": "1"
-    }
+      "CollectorId":{
+         "Description":"Optional. A collector UUID if known.",
+         "Type":"String",
+         "Default":"none"
+      },
+      "AlApplicationId":{
+         "Description":"Alert Logic Application Id for collected logs",
+         "Type":"String",
+         "Default":"guardduty"
+      },
+      "EnableKMSKeyRotation":{
+         "Description":"Enable automatic KMS key rotation. Incur additional AWS charges.",
+         "Type":"String",
+         "AllowedValues":[
+            "True",
+            "False"
+         ],
+         "Default":"False"
+      },
+      "KinesisShardCount":{
+         "Description":"Collector kinesis stream shard count.",
+         "Type":"Number",
+         "Default":"1"
+      },
+      "LambdaInVpc":{
+         "Description":"Bool to control if the lambda functions are created in a vpc",
+         "Type":"String",
+         "Default":"False",
+         "AllowedValues":[
+            "True",
+            "False"
+         ]
+      },
+      "LambdaSecurityGroupName": {
+         "Description": "Name to assing to the lambda function security group if placing them inside vpc",
+         "Type": "String",
+         "Default": ""
+      },
+      "LambdaVpcId":{
+         "Description":"VPC Id to place the lambda functions inside of",
+         "Type":"String",
+         "Default":""
+      },
+      "LambdaSubnetIds": {
+        "Description": "Vpc subnets to place lambda functions in if placing them inside vpc",
+        "Type": "CommaDelimitedList",
+        "Default": ""
+      }
    },
-   "Metadata" : {
-     "AWS::CloudFormation::Interface" : {
-       "ParameterGroups" : [
-         {
-           "Label" : { "default" : "Alert Logic credentials" },
-           "Parameters" : [
-             "AlApiEndpoint",
-             "AccessKeyId",
-             "SecretKey"
-           ]
-         },
-         {
-           "Label" : { "default":"Guard Duty collector configuration" },
-           "Parameters" : [
-             "CollectorId",
-             "AlDataResidency",
-             "AlApplicationId",
-             "EnableKMSKeyRotation",
-             "KinesisShardCount"
-           ]
-         }
-       ]
-     }
+   "Metadata":{
+      "AWS::CloudFormation::Interface":{
+         "ParameterGroups":[
+            {
+               "Label":{
+                  "default":"Alert Logic credentials"
+               },
+               "Parameters":[
+                  "AlApiEndpoint",
+                  "AccessKeyId",
+                  "SecretKey"
+               ]
+            },
+            {
+               "Label":{
+                  "default":"Guard Duty collector configuration"
+               },
+               "Parameters":[
+                  "CollectorId",
+                  "AlDataResidency",
+                  "AlApplicationId",
+                  "EnableKMSKeyRotation",
+                  "KinesisShardCount"
+               ]
+            },
+            {
+               "Label":{
+                  "default": "VPC Configuration"
+               },
+               "Parameters":[
+                  "LambdaInVpc",
+                  "LambdaSecurityGroupName",
+                  "LambdaSubnetIds",
+                  "LambdaVpcId"
+               ]
+            }
+         ]
+      }
+   },
+   "Conditions":{
+      "LambdaInVpc":{
+         "Fn::Equals":[
+            {
+               "Ref":"LambdaInVpc"
+            },
+            "True"
+         ]
+      }
    },
    "Resources":{
       "KinesisStream":{
          "Type":"AWS::Kinesis::Stream",
-         "DependsOn" : [
+         "DependsOn":[
+            
          ],
          "Properties":{
-            "ShardCount" : { "Ref": "KinesisShardCount"},
-            "Tags": [
-                {
-                    "Key": "Name",
-                    "Value": "AlertLogic CWE collector"
-                },
-                {
-                    "Key": "AlertLogic",
-                    "Value": "Collect"
-                }
+            "ShardCount":{
+               "Ref":"KinesisShardCount"
+            },
+            "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"AlertLogic CWE collector"
+               },
+               {
+                  "Key":"AlertLogic",
+                  "Value":"Collect"
+               }
             ]
          }
       },
@@ -113,300 +170,318 @@
             }
          }
       },
-        "LambdaKmsKey": {
-            "Type": "AWS::KMS::Key",
-            "DependsOn":[
-                "CollectLambdaRole",
-                "EncryptLambdaRole"
-            ],
-            "Properties": {
-               "Description": "kms key used to encrypt credentials for lambda",
-               "EnableKeyRotation": { "Ref": "EnableKMSKeyRotation"},
-               "KeyPolicy": {
-                    "Version": "2012-10-17",
-                    "Id": "al-kms-policy",
-                    "Statement": [
-                        {
-                            "Sid": "Enable IAM User Permissions",
-                            "Effect": "Allow",
-                            "Principal": {
-                            "AWS": {
-                             "Fn::Join": [
-                               ":",
-                               [
+      "LambdaKmsKey":{
+         "Type":"AWS::KMS::Key",
+         "DependsOn":[
+            "CollectLambdaRole",
+            "EncryptLambdaRole"
+         ],
+         "Properties":{
+            "Description":"kms key used to encrypt credentials for lambda",
+            "EnableKeyRotation":{
+               "Ref":"EnableKMSKeyRotation"
+            },
+            "KeyPolicy":{
+               "Version":"2012-10-17",
+               "Id":"al-kms-policy",
+               "Statement":[
+                  {
+                     "Sid":"Enable IAM User Permissions",
+                     "Effect":"Allow",
+                     "Principal":{
+                        "AWS":{
+                           "Fn::Join":[
+                              ":",
+                              [
                                  "arn:aws:iam",
                                  "",
                                  {
-                                   "Ref": "AWS::AccountId"
+                                    "Ref":"AWS::AccountId"
                                  },
                                  "root"
-                               ]
-                             ]
-                            }
-                            },
-                            "Action": "kms:*",
-                            "Resource": "*"
-                       },
-                       {
-                            "Sid": "Allow use of the key for lambda",
-                            "Effect": "Allow",
-                            "Principal": {
-                              "AWS": {
-                                "Fn::GetAtt": [
-                                  "CollectLambdaRole",
-                                  "Arn"
-                                ]
-                              }
-                            },
-                            "Action": [
-                              "kms:Decrypt",
-                              "kms:Encrypt"
-                            ],
-                            "Resource": "*"
-                       },
-                       {
-                          "Sid": "Allow use of the key for lambda encryption",
-                          "Effect": "Allow",
-                          "Principal": {
-                             "AWS": {
-                                "Fn::GetAtt": [
-                                   "EncryptLambdaRole",
-                                   "Arn"
-                                ]
-                             }
-                          },
-                          "Action": [
-                             "kms:Encrypt"
-                          ],
-                          "Resource": "*"
-                       }
-                    ]
-                },
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "AlertLogic CWE collector"
-                    },
-                    {
-                        "Key": "AlertLogic",
-                        "Value": "Collect"
-                    }
-                ]
-            }
-        },
-        "BasicLambdaRole":{
-            "Type":"AWS::IAM::Role",
-            "Properties":{
-                "Path":"/",
-                "AssumeRolePolicyDocument":{
-                    "Version":"2012-10-17",
-                    "Statement":[
-                        {
-                            "Effect":"Allow",
-                            "Principal":{
-                                "Service":[
-                                    "lambda.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
+                              ]
+                           ]
                         }
-                   ]
-                }
-            }
-        },
-        "EncryptLambdaRole":{
-            "Type":"AWS::IAM::Role",
-            "Properties":{
-                "Path":"/",
-                "AssumeRolePolicyDocument":{
-                    "Version":"2012-10-17",
-                    "Statement":[
-                        {
-                            "Effect":"Allow",
-                            "Principal":{
-                                "Service":[
-                                    "lambda.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
+                     },
+                     "Action":"kms:*",
+                     "Resource":"*"
+                  },
+                  {
+                     "Sid":"Allow use of the key for lambda",
+                     "Effect":"Allow",
+                     "Principal":{
+                        "AWS":{
+                           "Fn::GetAtt":[
+                              "CollectLambdaRole",
+                              "Arn"
+                           ]
                         }
-                   ]
-                }
-            }
-        },
-        "EncryptLambdaPolicy":{
-            "Type":"AWS::IAM::Policy",
-            "DependsOn":[
-                "EncryptLambdaRole",
-                "EncryptLambdaFunction"
-            ],
-            "Properties":{
-                "Roles":[
-                   {
-                      "Ref":"EncryptLambdaRole"
-                   }
-                ],
-                "PolicyName":"alertlogic-encrypt-lambda-policy",
-                "PolicyDocument":{
-                    "Version":"2012-10-17",
-                    "Statement":[
-                        {
-                            "Effect":"Allow",
-                            "Action":"logs:CreateLogGroup",
-                            "Resource":[
-                                {
-                                    "Fn::Join":[
-                                        "",
-                                        [
-                                            "arn:aws:logs:",
-                                            {
-                                                "Ref":"AWS::Region"
-                                            },
-                                            ":",
-                                            {
-                                                "Ref":"AWS::AccountId"
-                                            },
-                                            ":log-group:/aws/lambda/",
-                                            {
-                                                "Ref":"EncryptLambdaFunction"
-                                            },
-                                            ":*"
-                                        ]
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "Effect":"Allow",
-                            "Action":[
-                                "logs:CreateLogStream",
-                                "logs:PutLogEvents"
-                            ],
-                            "Resource":[
-                                {
-                                   "Fn::Join":[
-                                        "",
-                                        [
-                                            "arn:aws:logs:",
-                                            {
-                                                "Ref":"AWS::Region"
-                                            },
-                                            ":",
-                                            {
-                                                "Ref":"AWS::AccountId"
-                                            },
-                                            ":log-group:/aws/lambda/",
-                                            {
-                                                "Ref":"EncryptLambdaFunction"
-                                            },
-                                            ":log-stream:*"
-                                        ]
-                                    ]
-                                }
-                            ]
+                     },
+                     "Action":[
+                        "kms:Decrypt",
+                        "kms:Encrypt"
+                     ],
+                     "Resource":"*"
+                  },
+                  {
+                     "Sid":"Allow use of the key for lambda encryption",
+                     "Effect":"Allow",
+                     "Principal":{
+                        "AWS":{
+                           "Fn::GetAtt":[
+                              "EncryptLambdaRole",
+                              "Arn"
+                           ]
                         }
-                    ]
-                }
-            }
-        },
-        "EncryptLambdaFunction":{
-            "Type":"AWS::Lambda::Function",
-            "DependsOn":[
-                "EncryptLambdaRole"
-            ],
-            "Properties":{
-                "Description":"Alert Logic Lambda Encrypt function",
-                "Role":{
-                    "Fn::GetAtt":[
-                        "EncryptLambdaRole",
-                        "Arn"
-                    ]
-                },
-                "Code":{
-                    "ZipFile": {
-                       "Fn::Join": [
-                           "",
-                           [
-                                "const AWS = require('aws-sdk');\n",
-                                "const response = require('./cfn-response');\n",
-                                "\n",
-                                "\n",
-                                "function encrypt(event, context) {\n",
-                                "    const params = {\n",
-                                "        KeyId: event.ResourceProperties.KeyId,\n",
-                                "        Plaintext: event.ResourceProperties.Plaintext\n",
-                                "    };\n",
-                                "    const kms = new AWS.KMS();\n",
-                                "    kms.encrypt(params, function(err, data) {\n",
-                                "        if (err) {\n",
-                                "            console.log(err, err.stack); // an error occurred\n",
-                                "            return response.send(event, context, response.FAILED);\n",
-                                "        }\n",
-                                "        var base64 = Buffer.from(data.CiphertextBlob).toString('base64');\n",
-                                "        var responseData = {\n",
-                                "            EncryptedText : base64\n",
-                                "        };\n",
-                                "        return response.send(event, context, response.SUCCESS, responseData);\n",
-                                "    });\n",
-                                "}\n",
-                                "\n",
-                                "\n",
-                                "exports.handler = (event, context, callback) => {\n",
-                                "    if (event.ResourceType == 'AWS::CloudFormation::CustomResource' &&\n",
-                                "        event.RequestType == 'Create') {\n",
-                                "        return encrypt(event, context);\n",
-                                "    }\n",
-                                "    return response.send(event, context, response.SUCCESS);\n",
-                                "}"
-                            ]
+                     },
+                     "Action":[
+                        "kms:Encrypt"
+                     ],
+                     "Resource":"*"
+                  }
+               ]
+            },
+            "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"AlertLogic CWE collector"
+               },
+               {
+                  "Key":"AlertLogic",
+                  "Value":"Collect"
+               }
+            ]
+         }
+      },
+      "BasicLambdaRole":{
+         "Type":"AWS::IAM::Role",
+         "Properties":{
+            "Path":"/",
+            "AssumeRolePolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Principal":{
+                        "Service":[
+                           "lambda.amazonaws.com"
                         ]
-                    }
-                },
-                "Handler":"index.handler",
-                "Runtime":"nodejs12.x",
-                "MemorySize":128,
-                "Timeout": 5,
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "AlertLogic CWE collector"
-                    },
-                    {
-                        "Key": "AlertLogic",
-                        "Value": "Collect"
-                    }
-                ]
+                     },
+                     "Action":[
+                        "sts:AssumeRole"
+                     ]
+                  }
+               ]
             }
-        },
-        "EncryptSecretKeyCustomResource": {
-            "Type": "AWS::CloudFormation::CustomResource",
-            "DependsOn": [
-                "LambdaKmsKey",
-                "EncryptLambdaFunction",
-                "EncryptLambdaPolicy"
+         }
+      },
+      "EncryptLambdaRole":{
+         "Type":"AWS::IAM::Role",
+         "Properties":{
+            "Path":"/",
+            "AssumeRolePolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Principal":{
+                        "Service":[
+                           "lambda.amazonaws.com"
+                        ]
+                     },
+                     "Action":[
+                        "sts:AssumeRole"
+                     ]
+                  }
+               ]
+            }
+         }
+      },
+      "EncryptLambdaPolicy":{
+         "Type":"AWS::IAM::Policy",
+         "DependsOn":[
+            "EncryptLambdaRole",
+            "EncryptLambdaFunction"
+         ],
+         "Properties":{
+            "Roles":[
+               {
+                  "Ref":"EncryptLambdaRole"
+               }
             ],
-            "Properties": {
-                "ServiceToken": {
-                    "Fn::GetAtt": [
-                        "EncryptLambdaFunction",
-                        "Arn"
-                    ]
-                },
-                "KeyId": {
-                    "Fn::GetAtt": [
-                        "LambdaKmsKey",
-                        "Arn"
-                    ]
-                },
-                "Plaintext": {
-                    "Ref": "SecretKey"
-                }
+            "PolicyName":"alertlogic-encrypt-lambda-policy",
+            "PolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Action":"logs:CreateLogGroup",
+                     "Resource":[
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "arn:aws:logs:",
+                                 {
+                                    "Ref":"AWS::Region"
+                                 },
+                                 ":",
+                                 {
+                                    "Ref":"AWS::AccountId"
+                                 },
+                                 ":log-group:/aws/lambda/",
+                                 {
+                                    "Ref":"EncryptLambdaFunction"
+                                 },
+                                 ":*"
+                              ]
+                           ]
+                        }
+                     ]
+                  },
+                  {
+                     "Effect":"Allow",
+                     "Action":[
+                        "logs:CreateLogStream",
+                        "logs:PutLogEvents"
+                     ],
+                     "Resource":[
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "arn:aws:logs:",
+                                 {
+                                    "Ref":"AWS::Region"
+                                 },
+                                 ":",
+                                 {
+                                    "Ref":"AWS::AccountId"
+                                 },
+                                 ":log-group:/aws/lambda/",
+                                 {
+                                    "Ref":"EncryptLambdaFunction"
+                                 },
+                                 ":log-stream:*"
+                              ]
+                           ]
+                        }
+                     ]
+                  }
+               ]
             }
-        },
+         }
+      },
+      "EncryptLambdaFunction":{
+         "Type":"AWS::Lambda::Function",
+         "DependsOn":[
+            "EncryptLambdaRole"
+         ],
+         "Properties":{
+            "Description":"Alert Logic Lambda Encrypt function",
+            "Role":{
+               "Fn::GetAtt":[
+                  "EncryptLambdaRole",
+                  "Arn"
+               ]
+            },
+            "Code":{
+               "ZipFile":{
+                  "Fn::Join":[
+                     "",
+                     [
+                        "const AWS = require('aws-sdk');\n",
+                        "const response = require('./cfn-response');\n",
+                        "\n",
+                        "\n",
+                        "function encrypt(event, context) {\n",
+                        "    const params = {\n",
+                        "        KeyId: event.ResourceProperties.KeyId,\n",
+                        "        Plaintext: event.ResourceProperties.Plaintext\n",
+                        "    };\n",
+                        "    const kms = new AWS.KMS();\n",
+                        "    kms.encrypt(params, function(err, data) {\n",
+                        "        if (err) {\n",
+                        "            console.log(err, err.stack); // an error occurred\n",
+                        "            return response.send(event, context, response.FAILED);\n",
+                        "        }\n",
+                        "        var base64 = Buffer.from(data.CiphertextBlob).toString('base64');\n",
+                        "        var responseData = {\n",
+                        "            EncryptedText : base64\n",
+                        "        };\n",
+                        "        return response.send(event, context, response.SUCCESS, responseData);\n",
+                        "    });\n",
+                        "}\n",
+                        "\n",
+                        "\n",
+                        "exports.handler = (event, context, callback) => {\n",
+                        "    if (event.ResourceType == 'AWS::CloudFormation::CustomResource' &&\n",
+                        "        event.RequestType == 'Create') {\n",
+                        "        return encrypt(event, context);\n",
+                        "    }\n",
+                        "    return response.send(event, context, response.SUCCESS);\n",
+                        "}"
+                     ]
+                  ]
+               }
+            },
+            "Handler":"index.handler",
+            "Runtime":"nodejs12.x",
+            "MemorySize":128,
+            "Timeout":5,
+            "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"AlertLogic CWE collector"
+               },
+               {
+                  "Key":"AlertLogic",
+                  "Value":"Collect"
+               }
+            ],
+            "VpcConfig": {
+               "Fn::If": [
+                  "LambdaInVpc",
+                  {
+                     "SecurityGroupIds": [
+                        {"Ref": "LambdaVpcSecurityGroup"}
+                     ],
+                     "SubnetIds": {
+                        "Ref": "LambdaSubnetIds"
+                     }
+                  },
+                  {
+                     "Ref": "AWS::NoValue"
+                  }
+               ]
+            }
+         }
+      },
+      "EncryptSecretKeyCustomResource":{
+         "Type":"AWS::CloudFormation::CustomResource",
+         "DependsOn":[
+            "LambdaKmsKey",
+            "EncryptLambdaFunction",
+            "EncryptLambdaPolicy"
+         ],
+         "Properties":{
+            "ServiceToken":{
+               "Fn::GetAtt":[
+                  "EncryptLambdaFunction",
+                  "Arn"
+               ]
+            },
+            "KeyId":{
+               "Fn::GetAtt":[
+                  "LambdaKmsKey",
+                  "Arn"
+               ]
+            },
+            "Plaintext":{
+               "Ref":"SecretKey"
+            }
+         }
+      },
       "CollectLambdaFunction":{
          "Type":"AWS::Lambda::Function",
          "DependsOn":[
@@ -423,18 +498,25 @@
                   "Arn"
                ]
             },
-            "KmsKeyArn": {
-               "Fn::GetAtt": [
+            "KmsKeyArn":{
+               "Fn::GetAtt":[
                   "LambdaKmsKey",
                   "Arn"
                ]
             },
             "Code":{
-               "S3Bucket":{"Fn::Join" : ["", [
-                    "alertlogic-collectors-",
-                    { "Ref" : "AWS::Region" }
-               ]]},
-               "S3Key": "packages/lambda/al-cwe-collector.zip"
+               "S3Bucket":{
+                  "Fn::Join":[
+                     "",
+                     [
+                        "alertlogic-collectors-",
+                        {
+                           "Ref":"AWS::Region"
+                        }
+                     ]
+                  ]
+               },
+               "S3Key":"packages/lambda/al-cwe-collector.zip"
             },
             "Handler":"index.handler",
             "Runtime":"nodejs12.x",
@@ -442,45 +524,71 @@
             "Timeout":300,
             "Environment":{
                "Variables":{
-                  "aims_access_key_id": {
-                      "Ref":"AccessKeyId"
+                  "aims_access_key_id":{
+                     "Ref":"AccessKeyId"
                   },
                   "aims_secret_key":{
-                      "Fn::GetAtt": ["EncryptSecretKeyCustomResource", "EncryptedText"]
+                     "Fn::GetAtt":[
+                        "EncryptSecretKeyCustomResource",
+                        "EncryptedText"
+                     ]
                   },
-                  "aws_lambda_s3_bucket":{"Fn::Join" : ["", [
-                      "alertlogic-collectors-",
-                      { "Ref" : "AWS::Region" }
-                  ]]},
-                  "aws_lambda_zipfile_name": "packages/lambda/al-cwe-collector.zip",
-                  "aws_lambda_update_config_name": "configs/lambda/al-cwe-collector.json",
+                  "aws_lambda_s3_bucket":{
+                     "Fn::Join":[
+                        "",
+                        [
+                           "alertlogic-collectors-",
+                           {
+                              "Ref":"AWS::Region"
+                           }
+                        ]
+                     ]
+                  },
+                  "aws_lambda_zipfile_name":"packages/lambda/al-cwe-collector.zip",
+                  "aws_lambda_update_config_name":"configs/lambda/al-cwe-collector.json",
                   "al_api":{
-                      "Ref":"AlApiEndpoint"
+                     "Ref":"AlApiEndpoint"
                   },
                   "al_data_residency":{
-                      "Ref":"AlDataResidency"
+                     "Ref":"AlDataResidency"
                   },
-                  "collector_id": {
-                    "Ref":"CollectorId"
+                  "collector_id":{
+                     "Ref":"CollectorId"
                   },
-                  "stack_name": {
-                    "Ref":"AWS::StackName"
+                  "stack_name":{
+                     "Ref":"AWS::StackName"
                   },
                   "al_application_id":{
-                    "Ref":"AlApplicationId"
-                }
+                     "Ref":"AlApplicationId"
+                  }
                }
             },
-            "Tags": [
-                {
-                    "Key": "Name",
-                    "Value": "AlertLogic CWE collector"
-                },
-                {
-                    "Key": "AlertLogic",
-                    "Value": "Collect"
-                }
-            ]
+            "Tags":[
+               {
+                  "Key":"Name",
+                  "Value":"AlertLogic CWE collector"
+               },
+               {
+                  "Key":"AlertLogic",
+                  "Value":"Collect"
+               }
+            ],
+            "VpcConfig": {
+               "Fn::If": [
+                  "LambdaInVpc",
+                  {
+                     "SecurityGroupIds": [
+                        {"Ref": "LambdaVpcSecurityGroup"}
+                     ],
+                     "SubnetIds": {
+                        "Ref": "LambdaSubnetIds"
+                     }
+                  },
+                  {
+                     "Ref": "AWS::NoValue"
+                  }
+               ]
+            }
          }
       },
       "CollectLambdaPolicy":{
@@ -563,8 +671,8 @@
                      "Resource":[
                         {
                            "Fn::GetAtt":[
-                               "CollectLambdaFunction",
-                               "Arn"
+                              "CollectLambdaFunction",
+                              "Arn"
                            ]
                         }
                      ]
@@ -577,8 +685,8 @@
                      "Resource":[
                         {
                            "Fn::GetAtt":[
-                               "KinesisStream",
-                               "Arn"
+                              "KinesisStream",
+                              "Arn"
                            ]
                         }
                      ]
@@ -595,10 +703,15 @@
                               [
                                  "arn:aws:s3:::",
                                  {
-                                    "Fn::Join" : ["", [
-                                        "alertlogic-collectors-",
-                                        { "Ref" : "AWS::Region" }
-                                    ]]
+                                    "Fn::Join":[
+                                       "",
+                                       [
+                                          "alertlogic-collectors-",
+                                          {
+                                             "Ref":"AWS::Region"
+                                          }
+                                       ]
+                                    ]
                                  },
                                  "/*"
                               ]
@@ -613,8 +726,8 @@
       "HealthCheckLambdaPolicy":{
          "Type":"AWS::IAM::Policy",
          "DependsOn":[
-              "CollectLambdaRole",
-              "CloudWatchEventsRule"
+            "CollectLambdaRole",
+            "CloudWatchEventsRule"
          ],
          "Properties":{
             "Roles":[
@@ -632,27 +745,27 @@
                         "cloudformation:DescribeStacks"
                      ],
                      "Resource":[
-                          {
-                             "Fn::Join":[
-                                  "",
-                                  [
-                                      "arn:aws:cloudformation:",
-                                      {
-                                          "Ref":"AWS::Region"
-                                      },
-                                      ":",
-                                      {
-                                          "Ref":"AWS::AccountId"
-                                      },
-                                      ":stack/",
-                                      {
-                                          "Ref":"AWS::StackName"
-                                      },
-                                      "/*"
-                                  ]
+                        {
+                           "Fn::Join":[
+                              "",
+                              [
+                                 "arn:aws:cloudformation:",
+                                 {
+                                    "Ref":"AWS::Region"
+                                 },
+                                 ":",
+                                 {
+                                    "Ref":"AWS::AccountId"
+                                 },
+                                 ":stack/",
+                                 {
+                                    "Ref":"AWS::StackName"
+                                 },
+                                 "/*"
                               ]
-                          }
-                      ]
+                           ]
+                        }
+                     ]
                   },
                   {
                      "Effect":"Allow",
@@ -663,8 +776,8 @@
                      "Resource":[
                         {
                            "Fn::GetAtt":[
-                               "CloudWatchEventsRule",
-                               "Arn"
+                              "CloudWatchEventsRule",
+                              "Arn"
                            ]
                         }
                      ]
@@ -674,7 +787,7 @@
                      "Action":[
                         "lambda:ListEventSourceMappings"
                      ],
-                     "Resource": "*"
+                     "Resource":"*"
                   },
                   {
                      "Effect":"Allow",
@@ -683,7 +796,7 @@
                         "cloudwatch:Describe*",
                         "cloudwatch:List*"
                      ],
-                     "Resource": "*"
+                     "Resource":"*"
                   }
                ]
             }
@@ -699,7 +812,7 @@
          "Properties":{
             "Description":"CloudWatch events rule for Guard Duty events",
             "EventPattern":{
-                "detail-type":[
+               "detail-type":[
                   "GuardDuty Finding"
                ],
                "source":[
@@ -717,124 +830,135 @@
                         "Arn"
                      ]
                   },
-                  "RoleArn" : {
-                     "Fn::GetAtt" : ["CloudWatchEventsRole", "Arn"] 
+                  "RoleArn":{
+                     "Fn::GetAtt":[
+                        "CloudWatchEventsRole",
+                        "Arn"
+                     ]
                   }
                }
             ]
          }
       },
-      "UpdaterScheduledRule": {
-         "Type": "AWS::Events::Rule",
-         "DependsOn": [
+      "UpdaterScheduledRule":{
+         "Type":"AWS::Events::Rule",
+         "DependsOn":[
             "CollectLambdaPolicy",
             "CollectLambdaFunction"
          ],
-         "Properties": {
-            "Description": "Scheduled rule for updater function",
-            "ScheduleExpression": "rate(12 hours)",
-            "State": "ENABLED",
+         "Properties":{
+            "Description":"Scheduled rule for updater function",
+            "ScheduleExpression":"rate(12 hours)",
+            "State":"ENABLED",
             "Targets":[
-                {
-                    "Id":"1",
-                    "Arn":{
-                        "Fn::GetAtt":[
-                            "CollectLambdaFunction",
-                            "Arn"
-                        ]
-                    },
-                    "Input": "{\"RequestType\": \"ScheduledEvent\", \"Type\": \"SelfUpdate\"}"
-                }
+               {
+                  "Id":"1",
+                  "Arn":{
+                     "Fn::GetAtt":[
+                        "CollectLambdaFunction",
+                        "Arn"
+                     ]
+                  },
+                  "Input":"{\"RequestType\": \"ScheduledEvent\", \"Type\": \"SelfUpdate\"}"
+               }
             ]
          }
       },
-      "UpdaterScheduledRuleLambdaInvokePermission": {
-          "Type": "AWS::Lambda::Permission",
-          "DependsOn": [
+      "UpdaterScheduledRuleLambdaInvokePermission":{
+         "Type":"AWS::Lambda::Permission",
+         "DependsOn":[
             "CollectLambdaFunction",
             "CollectLambdaPolicy",
             "UpdaterScheduledRule"
-          ],
-          "Properties": {
-            "Action": "lambda:InvokeFunction",
-            "FunctionName": {
-              "Ref": "CollectLambdaFunction"
+         ],
+         "Properties":{
+            "Action":"lambda:InvokeFunction",
+            "FunctionName":{
+               "Ref":"CollectLambdaFunction"
             },
-            "Principal": "events.amazonaws.com",
+            "Principal":"events.amazonaws.com",
             "SourceArn":{
-              "Fn::GetAtt": [
-                "UpdaterScheduledRule",
-                "Arn"
-              ]
+               "Fn::GetAtt":[
+                  "UpdaterScheduledRule",
+                  "Arn"
+               ]
             }
-          }
+         }
       },
       "CloudWatchEventsRole":{
-         "Type": "AWS::IAM::Role",
+         "Type":"AWS::IAM::Role",
          "DependsOn":[
             "KinesisStream",
             "CollectLambdaFunction",
             "CollectLambdaPolicy"
          ],
-         "Properties": {
-            "AssumeRolePolicyDocument": {
-               "Version" : "2012-10-17",
-               "Statement": [ {
-                  "Effect": "Allow",
-                  "Principal": {
-                     "Service": [ "events.amazonaws.com" ]
-                  },
-                  "Action": [ "sts:AssumeRole" ]
-               } ]
+         "Properties":{
+            "AssumeRolePolicyDocument":{
+               "Version":"2012-10-17",
+               "Statement":[
+                  {
+                     "Effect":"Allow",
+                     "Principal":{
+                        "Service":[
+                           "events.amazonaws.com"
+                        ]
+                     },
+                     "Action":[
+                        "sts:AssumeRole"
+                     ]
+                  }
+               ]
             },
-            "Path": "/",
-            "Policies": [ {
-               "PolicyName": "root",
-               "PolicyDocument": {
-                  "Version" : "2012-10-17",
-                  "Statement": [
-                    {
-                      "Effect":"Allow",
-                      "Action":[
-                        "kinesis:PutRecord",
-                        "kinesis:PutRecords",
-                        "kinesis:GetRecords",
-                        "kinesis:GetShardIterator",
-                        "kinesis:DescribeStream"
-                      ],
-                      "Resource":[
+            "Path":"/",
+            "Policies":[
+               {
+                  "PolicyName":"root",
+                  "PolicyDocument":{
+                     "Version":"2012-10-17",
+                     "Statement":[
                         {
-                           "Fn::GetAtt":[
-                               "KinesisStream",
-                               "Arn"
+                           "Effect":"Allow",
+                           "Action":[
+                              "kinesis:PutRecord",
+                              "kinesis:PutRecords",
+                              "kinesis:GetRecords",
+                              "kinesis:GetShardIterator",
+                              "kinesis:DescribeStream"
+                           ],
+                           "Resource":[
+                              {
+                                 "Fn::GetAtt":[
+                                    "KinesisStream",
+                                    "Arn"
+                                 ]
+                              }
+                           ]
+                        },
+                        {
+                           "Effect":"Allow",
+                           "Action":[
+                              "kinesis:ListStreams"
+                           ],
+                           "Resource":"*"
+                        },
+                        {
+                           "Effect":"Allow",
+                           "Action":[
+                              "lambda:*"
+                           ],
+                           "Resource":[
+                              {
+                                 "Fn::GetAtt":[
+                                    "CollectLambdaFunction",
+                                    "Arn"
+                                 ]
+                              }
                            ]
                         }
-                      ]
-                    },
-                    {
-                      "Effect":"Allow",
-                      "Action":[
-                        "kinesis:ListStreams"
-                      ],
-                      "Resource": "*"
-                    },
-                    {
-                      "Effect":"Allow",
-                      "Action":[
-                         "lambda:*"
-                      ],
-                      "Resource":[
-                         {
-                            "Fn::GetAtt":[
-                                "CollectLambdaFunction",
-                                "Arn"
-                            ]
-                         }
-                      ]
-                    }
-                  ]
+                     ]
+                  }
                }
-            }]
+            ]
          }
       },
       "CollectLambdaEventSourceMapping":{
@@ -847,14 +971,21 @@
             "CloudWatchEventsRole"
          ],
          "Properties":{
-            "EventSourceArn" : { "Fn::GetAtt" : ["KinesisStream", "Arn"] },
-            "FunctionName" : { "Ref":"CollectLambdaFunction" },
-            "StartingPosition" : "TRIM_HORIZON"
+            "EventSourceArn":{
+               "Fn::GetAtt":[
+                  "KinesisStream",
+                  "Arn"
+               ]
+            },
+            "FunctionName":{
+               "Ref":"CollectLambdaFunction"
+            },
+            "StartingPosition":"TRIM_HORIZON"
          }
       },
-      "CheckinScheduledRule": {
-         "Type": "AWS::Events::Rule",
-         "DependsOn": [
+      "CheckinScheduledRule":{
+         "Type":"AWS::Events::Rule",
+         "DependsOn":[
             "CollectLambdaFunction",
             "CollectLambdaPolicy",
             "HealthCheckLambdaPolicy",
@@ -862,85 +993,116 @@
             "CloudWatchEventsRule",
             "CollectLambdaEventSourceMapping"
          ],
-         "Properties": {
-            "Description": "Scheduled rule for checkin function",
-            "ScheduleExpression": "rate(15 minutes)",
-            "State": "ENABLED",
+         "Properties":{
+            "Description":"Scheduled rule for checkin function",
+            "ScheduleExpression":"rate(15 minutes)",
+            "State":"ENABLED",
             "Targets":[
-                {
-                    "Id":"1",
-                    "Arn":{
-                        "Fn::GetAtt":[
-                            "CollectLambdaFunction",
-                            "Arn"
+               {
+                  "Id":"1",
+                  "Arn":{
+                     "Fn::GetAtt":[
+                        "CollectLambdaFunction",
+                        "Arn"
+                     ]
+                  },
+                  "Input":{
+                     "Fn::Join":[
+                        "",
+                        [
+                           "{\"RequestType\": \"ScheduledEvent\", \"Type\": \"Checkin\", \"AwsAccountId\": \"",
+                           {
+                              "Ref":"AWS::AccountId"
+                           },
+                           "\", \"Region\": \"",
+                           {
+                              "Ref":"AWS::Region"
+                           },
+                           "\", \"StackName\": \"",
+                           {
+                              "Ref":"AWS::StackName"
+                           },
+                           "\", \"KinesisArn\": \"",
+                           {
+                              "Fn::GetAtt":[
+                                 "KinesisStream",
+                                 "Arn"
+                              ]
+                           },
+                           "\", \"CloudWatchEventsRule\": \"",
+                           {
+                              "Ref":"CloudWatchEventsRule"
+                           },
+                           "\", \"CweRulePattern\": \"{\\\"detail-type\\\":[\\\"GuardDuty Finding\\\"],\\\"source\\\":[\\\"aws.guardduty\\\"]}\"",
+                           "}"
                         ]
-                    },
-                    "Input": {
-                        "Fn::Join":[
-                            "",
-                            [
-                                "{\"RequestType\": \"ScheduledEvent\", \"Type\": \"Checkin\", \"AwsAccountId\": \"",
-                                {
-                                    "Ref":"AWS::AccountId"
-                                },
-                                "\", \"Region\": \"",
-                                {
-                                    "Ref": "AWS::Region"
-                                },
-                                "\", \"StackName\": \"",
-                                {
-                                    "Ref":"AWS::StackName"
-                                },
-                                "\", \"KinesisArn\": \"",
-                                {
-                                   "Fn::GetAtt":[
-                                      "KinesisStream",
-                                      "Arn"
-                                   ]
-                                },
-                                "\", \"CloudWatchEventsRule\": \"", { "Ref": "CloudWatchEventsRule" },
-                                "\", \"CweRulePattern\": \"{\\\"detail-type\\\":[\\\"GuardDuty Finding\\\"],\\\"source\\\":[\\\"aws.guardduty\\\"]}\"",
-                                "}"
-                            ]
-                        ]
-                    }
-                }
+                     ]
+                  }
+               }
             ]
          }
       },
-      "CheckinScheduledRuleLambdaInvokePermission": {
-          "Type": "AWS::Lambda::Permission",
-          "DependsOn": [
+      "CheckinScheduledRuleLambdaInvokePermission":{
+         "Type":"AWS::Lambda::Permission",
+         "DependsOn":[
             "CollectLambdaFunction",
             "CollectLambdaPolicy",
             "HealthCheckLambdaPolicy",
             "CheckinScheduledRule"
-          ],
-          "Properties": {
-            "Action": "lambda:InvokeFunction",
-            "FunctionName": {
-              "Ref": "CollectLambdaFunction"
+         ],
+         "Properties":{
+            "Action":"lambda:InvokeFunction",
+            "FunctionName":{
+               "Ref":"CollectLambdaFunction"
             },
-            "Principal": "events.amazonaws.com",
+            "Principal":"events.amazonaws.com",
             "SourceArn":{
-              "Fn::GetAtt": [
-                "CheckinScheduledRule",
-                "Arn"
-              ]
+               "Fn::GetAtt":[
+                  "CheckinScheduledRule",
+                  "Arn"
+               ]
             }
-          }
+         }
       },
-      "RegistrationResource": {
-         "Type": "Custom::RegistrationResource",
-         "DependsOn": [
+      "RegistrationResource":{
+         "Type":"Custom::RegistrationResource",
+         "DependsOn":[
             "CollectLambdaFunction",
             "CollectLambdaPolicy"
          ],
-         "Properties": {
-            "ServiceToken": { "Fn::GetAtt" : ["CollectLambdaFunction", "Arn"] },
-            "StackName": { "Ref" : "AWS::StackName" },
-            "AwsAccountId": { "Ref": "AWS::AccountId"},
-            "CollectRule": "aws.guardduty"
+         "Properties":{
+            "ServiceToken":{
+               "Fn::GetAtt":[
+                  "CollectLambdaFunction",
+                  "Arn"
+               ]
+            },
+            "StackName":{
+               "Ref":"AWS::StackName"
+            },
+            "AwsAccountId":{
+               "Ref":"AWS::AccountId"
+            },
+            "CollectRule":"aws.guardduty"
+         }
+      },
+      "LambdaVpcSecurityGroup":{
+         "Type":"AWS::EC2::SecurityGroup",
+         "Condition":"LambdaInVpc",
+         "Properties":{
+            "GroupName":{
+               "Ref":"LambdaSecurityGroupName"
+            },
+            "GroupDescription":"Allow all outbound traffic for Alert Logic guardduty lambda functions",
+            "SecurityGroupEgress":[
+               {
+                  "CidrIp":"0.0.0.0/0",
+                  "IpProtocol":-1
+               }
+            ],
+            "VpcId":{
+               "Ref":"LambdaVpcId"
+            }
          }
       }
    }
